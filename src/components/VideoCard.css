@@ -1,0 +1,19 @@
+.video-card-body {
+  padding: 16px 18px 20px;
+}
+
+.video-card-title {
+  font-size: 15.5px;
+  line-height: 1.4;
+  margin: 4px 0 12px;
+}
+
+.video-card-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--t24-red);
+}
+
+.video-card-link:hover {
+  color: var(--t24-white);
+}
