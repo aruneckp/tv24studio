@@ -103,6 +103,41 @@
   50% { transform: scaleY(1); }
 }
 
+/* photo anchor (transparent cut-out), sits left of centre like a studio anchor */
+.anchor-photo {
+  position: absolute;
+  left: 12cqw;
+  bottom: 14cqw; /* face stays clear of the lower third */
+  width: 40cqw;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.anchor-photo::before {
+  content: '';
+  position: absolute;
+  inset: 10% 8% 0;
+  background: radial-gradient(ellipse at 50% 60%, rgba(247, 148, 29, 0.28), transparent 65%);
+  filter: blur(2cqw);
+  transition: opacity 0.4s;
+  opacity: 0.5;
+}
+.anchor-photo img {
+  position: relative;
+  width: 100%;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 0 1.2cqw rgba(0, 0, 0, 0.6));
+  -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent);
+  mask-image: linear-gradient(to bottom, #000 82%, transparent);
+}
+.anchor-photo.is-speaking::before { opacity: 1; }
+.anchor-photo.is-speaking img { animation: anchorTalk 3.2s ease-in-out infinite; }
+@keyframes anchorTalk {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  30% { transform: scale(1.012) rotate(-0.4deg); }
+  65% { transform: scale(1.006) rotate(0.35deg); }
+}
+
 /* channel bug */
 .stage-bug {
   position: absolute;
@@ -332,5 +367,5 @@
 .stage:fullscreen .stage-fs { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .stage-bg::after, .ticker-move, .stage-breaking span, .anchor-ph-wave i { animation: none; }
+  .stage-bg::after, .ticker-move, .anchor-photo.is-speaking img, .stage-breaking span, .anchor-ph-wave i { animation: none; }
 }

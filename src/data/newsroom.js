@@ -9,6 +9,10 @@ export const NEWSROOM_API = (import.meta.env.VITE_NEWSROOM_API || 'http://localh
 // Put your base anchor video at public/anchor.mp4 (or set VITE_ANCHOR_VIDEO).
 export const ANCHOR_VIDEO = import.meta.env.VITE_ANCHOR_VIDEO || '/anchor.mp4'
 
+// Used when there is no anchor video: a cut-out photo of the news reader
+// (transparent PNG) at public/anchor.png, or set VITE_ANCHOR_IMAGE.
+export const ANCHOR_IMAGE = import.meta.env.VITE_ANCHOR_IMAGE || '/anchor.png'
+
 export const DIALECTS = [
   { value: 'standard', label: 'Standard Telugu' },
   { value: 'coastal', label: 'Coastal Andhra' },

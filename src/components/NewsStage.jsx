@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useRef, useState } from 'react'
-import { ANCHOR_VIDEO } from '../data/newsroom.js'
+import { ANCHOR_IMAGE, ANCHOR_VIDEO } from '../data/newsroom.js'
 import './NewsStage.css'
 
 function useClock() {
@@ -39,7 +39,9 @@ const NewsStage = forwardRef(function NewsStage(
 ) {
   const now = useClock()
   const videoRef = useRef(null)
-  const [videoOk, setVideoOk] = useState(true)
+  // Anchor source, in order of preference: base video → photo cut-out → drawn placeholder.
+  const [anchor, setAnchor] = useState('video')
+  const videoOk = anchor === 'video'
 
   // The base anchor video only "talks" while the voice is speaking.
   useEffect(() => {
@@ -58,7 +60,7 @@ const NewsStage = forwardRef(function NewsStage(
       <div className="stage-bg" />
 
       <div className="stage-anchor">
-        {videoOk ? (
+        {anchor === 'video' && (
           <video
             ref={videoRef}
             src={ANCHOR_VIDEO}
@@ -66,11 +68,15 @@ const NewsStage = forwardRef(function NewsStage(
             loop
             playsInline
             preload="auto"
-            onError={() => setVideoOk(false)}
+            onError={() => setAnchor('image')}
           />
-        ) : (
-          <AnchorPlaceholder speaking={speaking} />
         )}
+        {anchor === 'image' && (
+          <div className={`anchor-photo ${speaking ? 'is-speaking' : ''}`}>
+            <img src={ANCHOR_IMAGE} alt="TV24 news anchor" onError={() => setAnchor('none')} />
+          </div>
+        )}
+        {anchor === 'none' && <AnchorPlaceholder speaking={speaking} />}
       </div>
 
       {/* top-left channel bug */}
