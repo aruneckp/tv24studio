@@ -103,14 +103,16 @@
   50% { transform: scaleY(1); }
 }
 
-/* Photo anchor: real head + neck cut-out (public/anchor.png) on a suit drawn
-   in SVG. Box is 616 x 760 units; the head photo fills the top 616 x 416. */
+/* Photo anchor: the real head cut-out (public/anchor.png), shown as-is — no
+   drawn body, no head movement. A soft mask fades the flat neck edge into
+   the stage instead of showing a hard cut line. */
 .anchor-photo {
   position: absolute;
-  left: 14cqw;
-  bottom: 0;
-  width: 36cqw;
-  aspect-ratio: 616 / 760;
+  left: 16cqw;
+  bottom: 14cqw;
+  width: 34cqw;
+  -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent 97%);
+  mask-image: linear-gradient(to bottom, #000 82%, transparent 97%);
 }
 .anchor-photo::before {
   content: '';
@@ -123,34 +125,10 @@
 }
 .anchor-photo.is-speaking::before { opacity: 1; }
 
-.anchor-suit {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  transform-origin: 50% 100%;
-  /* slow breathing, a touch more while talking */
-  transform: translateY(var(--sway, 0%)) scaleY(var(--breath, 1));
-  will-change: transform;
-}
-.anchor-suit-back { filter: drop-shadow(0 0 1.2cqw rgba(0, 0, 0, 0.55)); }
-
-.anchor-head {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  /* pivot at the base of the neck */
-  transform-origin: 44.6% 92%;
-  transform: translateY(calc(var(--lift, 0%) * -1)) rotate(var(--tilt, 0deg)) rotateX(var(--nod, 0deg));
-  will-change: transform;
-}
-.anchor-head img {
+.anchor-photo img {
   display: block;
   width: 100%;
 }
-.anchor-base { position: relative; }
 /* Dark mouth opening, revealed as the jaw drops. Positions match public/anchor.png. */
 .anchor-mouth {
   position: absolute;
