@@ -1,0 +1,258 @@
+.newsroom {
+  padding-top: 40px;
+  padding-bottom: 64px;
+}
+
+.nr-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.nr-head h1 { font-size: 36px; }
+.nr-head p { max-width: 640px; margin: 0; }
+
+.nr-server {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--t24-border);
+  background: var(--t24-dark);
+  color: var(--t24-gray);
+}
+.nr-server .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--t24-gray-dark);
+}
+.nr-server.is-online .dot { background: #2fbf71; }
+.nr-server.is-offline .dot { background: var(--t24-gold); }
+
+.nr-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  align-items: start;
+}
+.nr-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.nr-side { display: flex; flex-direction: column; gap: 16px; }
+
+.nr-transport {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.nr-btn {
+  background: var(--t24-dark-2);
+  color: #fff;
+  border: 1px solid var(--t24-border);
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.nr-btn:hover:not(:disabled) { border-color: var(--t24-red); }
+.nr-btn:disabled, .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.nr-play { min-width: 170px; justify-content: center; }
+.nr-voice-mode { font-size: 13px; color: var(--t24-gray); }
+.nr-fs { margin-left: auto; }
+
+.nr-note {
+  font-size: 13px;
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--t24-gold);
+  background: rgba(247, 148, 29, 0.08);
+}
+.nr-note code { color: var(--t24-gold); }
+
+.nr-panel {
+  background: var(--t24-dark);
+  border: 1px solid var(--t24-border);
+  border-radius: 10px;
+  padding: 18px;
+}
+.nr-panel h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--t24-gold);
+  margin-bottom: 12px;
+}
+
+.nr-script {
+  font-family: 'Noto Sans Telugu', var(--sans);
+  font-size: 17px;
+  line-height: 1.9;
+  color: var(--t24-gray);
+  margin: 0;
+}
+.nr-script .is-current {
+  color: #fff;
+  background: rgba(226, 35, 26, 0.25);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0 2px;
+}
+.nr-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--t24-red);
+  font-weight: 700;
+}
+
+.nr-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.nr-form label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--t24-gray);
+}
+.nr-form select,
+.nr-form input:not([type='checkbox']),
+.nr-form textarea {
+  background: var(--t24-black);
+  color: #fff;
+  border: 1px solid var(--t24-border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  font: inherit;
+  font-family: 'Noto Sans Telugu', var(--sans);
+}
+.nr-form label select,
+.nr-form label input:not([type='checkbox']) { width: 170px; }
+.nr-form textarea { resize: vertical; }
+.nr-form .nr-check { justify-content: flex-start; }
+.nr-check input { accent-color: var(--t24-red); }
+.nr-generate { width: 100%; justify-content: center; margin-top: 14px; }
+.nr-hint { font-size: 13px; margin-bottom: 10px; }
+
+.nr-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 240px;
+  overflow: auto;
+  font: 12px/1.55 ui-monospace, 'SF Mono', Menlo, monospace;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.nr-log li {
+  padding-left: 10px;
+  border-left: 2px solid #2fbf71;
+  color: var(--t24-gray);
+  animation: logIn 0.25s ease-out;
+}
+.nr-log li b { color: #fff; margin-right: 4px; }
+.nr-log .lvl-warn { border-color: var(--t24-gold); }
+.nr-log .lvl-error { border-color: var(--t24-red); }
+.nr-typing { opacity: 0.7; font-style: italic; }
+@keyframes logIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.nr-agents { margin-top: 12px; font-size: 13px; color: var(--t24-gray); }
+.nr-agents summary { cursor: pointer; color: #fff; font-weight: 600; }
+.nr-agents ul { padding-left: 18px; margin: 8px 0 0; line-height: 1.6; }
+.nr-agents b { color: #fff; }
+
+.nr-rundown {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.nr-rundown button {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 8px;
+  color: var(--t24-gray);
+  cursor: pointer;
+  font-family: 'Noto Sans Telugu', var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.nr-rundown button:hover { background: var(--t24-dark-2); }
+.nr-rundown button.is-active {
+  background: rgba(226, 35, 26, 0.15);
+  border-color: var(--t24-red);
+  color: #fff;
+}
+.rd-no {
+  flex: none;
+  width: 30px;
+  font: 800 12px/1.9 var(--sans);
+  color: var(--t24-gold);
+}
+.nr-rundown em, .nr-desk em {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: var(--t24-red);
+  padding: 1px 5px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: 2px;
+}
+
+.nr-desk {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: 'Noto Sans Telugu', var(--sans);
+  font-size: 14px;
+}
+.nr-desk li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--t24-dark-2);
+  border-radius: 4px;
+}
+.nr-desk button {
+  background: none;
+  border: 0;
+  color: var(--t24-gray);
+  cursor: pointer;
+}
+
+@media (max-width: 1000px) {
+  .nr-grid { grid-template-columns: 1fr; }
+  .nr-head h1 { font-size: 28px; }
+}
+@media (max-width: 560px) {
+  .nr-fs { margin-left: 0; }
+  .nr-form label select,
+  .nr-form label input:not([type='checkbox']) { width: 150px; }
+}

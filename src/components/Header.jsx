@@ -5,6 +5,7 @@ import './Header.css'
 
 const NAV_LINKS = [
   { to: '/', label: 'Home' },
+  { to: '/newsroom', label: 'AI Newsroom' },
   { to: '/videos', label: 'Videos' },
   { to: '/shows', label: 'Shows' },
   { to: '/music', label: 'Music' },
