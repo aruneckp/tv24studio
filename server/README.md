@@ -54,6 +54,21 @@ LLM the Editor still writes a usable script from the headline + summary.
 - `GET /api/bulletin/latest` — last generated bulletin
 - `GET /media/<file>.mp3` — recorded segments (cached by script + voice)
 
+## Deploy on Render
+
+`render.yaml` at the repo root describes both services. To set them up by hand:
+
+1. **Agent server**: Render → New → Web Service → this repo. Root Directory `server`,
+   Build `pip install -r requirements.txt`, Start `uvicorn app.main:app --host 0.0.0.0 --port $PORT`,
+   env `CORS_ORIGINS=https://tv24studio.onrender.com` and `PYTHON_VERSION=3.12.7`.
+   Note its URL (for example `https://tv24-newsroom-api.onrender.com`).
+2. **Website** (the existing `tv24studio` static site): add env `VITE_NEWSROOM_API=<agent server URL>`,
+   and under Redirects/Rewrites add `/*` → `/index.html` (Rewrite) so `/newsroom` opens directly.
+   Then redeploy.
+
+The free web service sleeps after about 15 minutes idle, so the first bulletin after a pause
+takes 30–60 seconds; until it wakes, the page runs the demo bulletin.
+
 ## Notes before going on air
 
 - Always review generated scripts — an LLM can still get Telugu names or facts wrong.
