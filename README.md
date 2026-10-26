@@ -17,6 +17,20 @@ from the channel's actual YouTube logo and banner.
 - All video/channel/social data lives in `src/data/videos.js` — edit that file
   to add more featured videos or change links.
 
+## AI Newsroom (agent-based news reader)
+`/newsroom` is a TV-style Telugu news bulletin run by five AI agents
+(Collector → Producer → Editor → Director → Anchor): live feeds in, anchor-style
+Telugu script out, read aloud with a free Telugu neural voice over a broadcast
+graphics package (channel bug, live clock, story window, breaking strip, lower
+third with live captions, scrolling ticker), plus a News Desk to add your own
+stories and a 24×7 loop mode for streaming.
+
+- Agent server: see [`server/README.md`](server/README.md)
+- Anchor video: drop your base anchor clip at `public/anchor.mp4` — it plays while
+  the anchor is speaking and pauses between segments. Without it, an animated
+  placeholder anchor is shown.
+- Without the server the page still runs a demo bulletin in the browser.
+
 ## Run it locally
 ```bash
 npm install

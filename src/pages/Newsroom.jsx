@@ -1,0 +1,343 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import NewsStage from '../components/NewsStage.jsx'
+import { DIALECTS, NEWSROOM_API, buildDemoBulletin, splitSentences } from '../data/newsroom.js'
+import { speakSegment, useBrowserTeluguVoice } from '../hooks/useAnchorVoice.js'
+import './Newsroom.css'
+
+const AGENTS = [
+  { name: 'Collector', role: 'Reporter — pulls fresh stories from news feeds' },
+  { name: 'Producer', role: 'Shift in-charge — ranks & picks the top stories' },
+  { name: 'Editor', role: 'Script writer — rewrites them in anchor-style Telugu' },
+  { name: 'Director', role: 'PCR — builds intro, rundown, ticker & outro' },
+  { name: 'Anchor', role: 'Reads each segment with a Telugu neural voice' },
+]
+
+const VOICE_MODE_LABEL = {
+  server: 'Neural voice (server)',
+  browser: 'Browser Telugu voice',
+  silent: 'Silent preview — no Telugu voice in this browser',
+}
+
+export default function Newsroom() {
+  const [server, setServer] = useState({ status: 'checking' })
+  const [bulletin, setBulletin] = useState(() => buildDemoBulletin())
+  const [index, setIndex] = useState(0)
+  const [sentence, setSentence] = useState(0)
+  const [playing, setPlaying] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [voiceMode, setVoiceMode] = useState(null)
+  const [log, setLog] = useState([])
+
+  const [voice, setVoice] = useState('female')
+  const [dialect, setDialect] = useState('standard')
+  const [maxStories, setMaxStories] = useState(6)
+  const [useLlm, setUseLlm] = useState(true)
+  const [loop, setLoop] = useState(false)
+  const [desk, setDesk] = useState([])
+  const [draft, setDraft] = useState({ title: '', summary: '', breaking: false })
+
+  const stageRef = useRef(null)
+  const logTimers = useRef([])
+  const hasTeluguVoice = useBrowserTeluguVoice()
+
+  const rundown = bulletin.rundown
+  const segment = rundown[index]
+  const storyCount = rundown.filter((s) => s.kind === 'story').length
+  const storyNo = rundown.slice(0, index + 1).filter((s) => s.kind === 'story').length
+  const caption = useMemo(() => splitSentences(segment?.script)[sentence] || '', [segment, sentence])
+
+  // Is the agent server up?
+  useEffect(() => {
+    const ctrl = new AbortController()
+    fetch(`${NEWSROOM_API}/api/health`, { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((h) => setServer({ status: 'online', ...h }))
+      .catch(() => !ctrl.signal.aborted && setServer({ status: 'offline' }))
+    return () => ctrl.abort()
+  }, [])
+
+  // Reveal the agent log line by line, like a live gallery feed.
+  const playLog = useCallback((entries) => {
+    logTimers.current.forEach(clearTimeout)
+    setLog([])
+    const visible = entries.filter((e) => e.message !== 'started')
+    logTimers.current = visible.map((e, i) => setTimeout(() => setLog((l) => [...l, e]), 180 * i))
+  }, [])
+  useEffect(() => () => logTimers.current.forEach(clearTimeout), [])
+
+  const generate = useCallback(
+    async ({ autoplay = false } = {}) => {
+      setPlaying(false)
+      setGenerating(true)
+      setLog([{ agent: 'Studio', level: 'info', message: 'Briefing the agents…' }])
+      let next
+      try {
+        const res = await fetch(`${NEWSROOM_API}/api/bulletin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ voice, dialect, max_stories: maxStories, use_llm: useLlm, manual_stories: desk }),
+        })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        next = await res.json()
+        setServer((s) => (s.status === 'online' ? s : { status: 'online' }))
+      } catch {
+        setServer({ status: 'offline' })
+        next = buildDemoBulletin({ maxStories, manualStories: desk })
+      }
+      setBulletin(next)
+      setIndex(0)
+      setSentence(0)
+      setGenerating(false)
+      playLog(next.log)
+      if (autoplay) setPlaying(true)
+    },
+    [voice, dialect, maxStories, useLlm, desk, playLog],
+  )
+
+  // Playback: read the current segment, then move to the next one.
+  useEffect(() => {
+    if (!playing || !segment) return undefined
+    setSentence(0)
+    const cancel = speakSegment(segment, {
+      gender: voice,
+      onSentence: setSentence,
+      onMode: setVoiceMode,
+      onEnd: () => {
+        if (index < rundown.length - 1) setIndex((i) => i + 1)
+        else if (loop) generate({ autoplay: true })
+        else setPlaying(false)
+      },
+    })
+    return cancel
+    // segment.id covers segment changes; voice/loop changes apply from the next segment
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, segment?.id])
+
+  const jump = (i) => {
+    setIndex(i)
+    setSentence(0)
+  }
+
+  const togglePlay = () => {
+    if (!playing && index === rundown.length - 1) jump(0)
+    setPlaying((p) => !p)
+  }
+
+  const fullscreen = () => stageRef.current?.requestFullscreen?.()
+
+  const addDesk = (e) => {
+    e.preventDefault()
+    if (!draft.title.trim()) return
+    setDesk((d) => [...d, { ...draft, title: draft.title.trim(), summary: draft.summary.trim() }])
+    setDraft({ title: '', summary: '', breaking: false })
+  }
+
+  return (
+    <div className="newsroom container">
+      <header className="nr-head">
+        <div>
+          <span className="eyebrow">AI Newsroom</span>
+          <h1>TV24 Agent News Reader</h1>
+          <p>
+            Five AI agents run the bulletin — they collect the news, pick the top stories, write the anchor
+            script in Telugu, build the rundown and read it on air.
+          </p>
+        </div>
+        <span className={`nr-server is-${server.status}`}>
+          <span className="dot" />
+          {server.status === 'online' && `Agent server online${server.llm ? ` · LLM: ${server.llm}` : ' · rule-based editor'}`}
+          {server.status === 'offline' && 'Agent server offline — demo mode'}
+          {server.status === 'checking' && 'Connecting to agent server…'}
+        </span>
+      </header>
+
+      <div className="nr-grid">
+        <div className="nr-main">
+          <NewsStage
+            ref={stageRef}
+            segment={segment}
+            index={storyNo}
+            total={storyCount}
+            caption={caption}
+            ticker={bulletin.ticker || []}
+            speaking={playing}
+            onFullscreen={fullscreen}
+          />
+
+          <div className="nr-transport">
+            <button className="nr-btn" onClick={() => jump(Math.max(0, index - 1))} disabled={index === 0} aria-label="Previous">
+              ⏮
+            </button>
+            <button className="btn btn-red nr-play" onClick={togglePlay} disabled={generating}>
+              {playing ? '❚❚ Pause' : '▶ Play bulletin'}
+            </button>
+            <button
+              className="nr-btn"
+              onClick={() => jump(Math.min(rundown.length - 1, index + 1))}
+              disabled={index >= rundown.length - 1}
+              aria-label="Next"
+            >
+              ⏭
+            </button>
+            <span className="nr-voice-mode">
+              {playing && voiceMode ? VOICE_MODE_LABEL[voiceMode] : `${index + 1} / ${rundown.length} segments`}
+            </span>
+            <button className="nr-btn nr-fs" onClick={fullscreen}>
+              ⛶ Full screen
+            </button>
+          </div>
+
+          {!hasTeluguVoice && server.status !== 'online' && (
+            <p className="nr-note">
+              This browser has no Telugu voice installed, so the demo runs as a silent preview. Start the agent
+              server (see <code>server/README.md</code>) for the free Telugu neural voice.
+            </p>
+          )}
+
+          <section className="nr-panel">
+            <h3>Script on air</h3>
+            <p className="nr-script">
+              {splitSentences(segment?.script).map((s, i) => (
+                <span key={i} className={i === sentence ? 'is-current' : ''}>
+                  {s}{' '}
+                </span>
+              ))}
+            </p>
+            {segment?.link && (
+              <a className="nr-link" href={segment.link} target="_blank" rel="noreferrer">
+                Source: {segment.source} ↗
+              </a>
+            )}
+          </section>
+        </div>
+
+        <aside className="nr-side">
+          <section className="nr-panel">
+            <h3>Control room</h3>
+            <div className="nr-form">
+              <label>
+                Anchor voice
+                <select value={voice} onChange={(e) => setVoice(e.target.value)}>
+                  <option value="female">Female (Shruti)</option>
+                  <option value="male">Male (Mohan)</option>
+                </select>
+              </label>
+              <label>
+                Dialect
+                <select value={dialect} onChange={(e) => setDialect(e.target.value)}>
+                  {DIALECTS.map((d) => (
+                    <option key={d.value} value={d.value}>
+                      {d.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Stories
+                <input
+                  type="number"
+                  min="1"
+                  max="15"
+                  value={maxStories}
+                  onChange={(e) => setMaxStories(Math.min(15, Math.max(1, Number(e.target.value) || 1)))}
+                />
+              </label>
+              <label className="nr-check">
+                <input type="checkbox" checked={useLlm} onChange={(e) => setUseLlm(e.target.checked)} />
+                Use LLM editor
+              </label>
+              <label className="nr-check">
+                <input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} />
+                24×7 loop (refresh &amp; replay)
+              </label>
+            </div>
+            <button className="btn btn-red nr-generate" onClick={() => generate({ autoplay: true })} disabled={generating}>
+              {generating ? 'Agents working…' : '⚡ Generate new bulletin'}
+            </button>
+          </section>
+
+          <section className="nr-panel">
+            <h3>Agent activity</h3>
+            <ol className="nr-log">
+              {(log.length ? log : bulletin.log.filter((e) => e.message !== 'started')).map((e, i) => (
+                <li key={i} className={`lvl-${e.level}`}>
+                  <b>{e.agent}</b> {e.message}
+                </li>
+              ))}
+              {generating && <li className="lvl-info nr-typing">agents are working…</li>}
+            </ol>
+            <details className="nr-agents">
+              <summary>Who are the agents?</summary>
+              <ul>
+                {AGENTS.map((a) => (
+                  <li key={a.name}>
+                    <b>{a.name}</b> — {a.role}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </section>
+
+          <section className="nr-panel">
+            <h3>Rundown</h3>
+            <ol className="nr-rundown">
+              {rundown.map((s, i) => (
+                <li key={s.id}>
+                  <button className={i === index ? 'is-active' : ''} onClick={() => jump(i)}>
+                    <span className="rd-no">{s.kind === 'story' ? String(rundown.slice(0, i + 1).filter((x) => x.kind === 'story').length).padStart(2, '0') : s.kind === 'intro' ? 'IN' : 'OUT'}</span>
+                    <span className="rd-text">
+                      {s.breaking && <em>BREAKING</em>}
+                      {s.headline}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <section className="nr-panel">
+            <h3>News desk</h3>
+            <p className="nr-hint">Add your own story — it goes to the top of the next bulletin.</p>
+            <form className="nr-form" onSubmit={addDesk}>
+              <input
+                placeholder="శీర్షిక (headline)"
+                value={draft.title}
+                maxLength={300}
+                onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+              />
+              <textarea
+                placeholder="వివరాలు (details)"
+                rows={3}
+                maxLength={3000}
+                value={draft.summary}
+                onChange={(e) => setDraft({ ...draft, summary: e.target.value })}
+              />
+              <label className="nr-check">
+                <input type="checkbox" checked={draft.breaking} onChange={(e) => setDraft({ ...draft, breaking: e.target.checked })} />
+                Breaking
+              </label>
+              <button className="btn btn-outline" type="submit">
+                + Add to desk
+              </button>
+            </form>
+            {desk.length > 0 && (
+              <ul className="nr-desk">
+                {desk.map((d, i) => (
+                  <li key={i}>
+                    <span>
+                      {d.breaking && <em>BREAKING</em>}
+                      {d.title}
+                    </span>
+                    <button onClick={() => setDesk(desk.filter((_, j) => j !== i))} aria-label="Remove">
+                      ✕
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </aside>
+      </div>
+    </div>
+  )
+}

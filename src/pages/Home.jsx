@@ -23,7 +23,8 @@ export default function Home() {
               one place.
             </p>
             <div className="hero-actions">
-              <Link to="/videos" className="btn btn-red">Watch Latest</Link>
+              <Link to="/newsroom" className="btn btn-red">▶ AI News Bulletin</Link>
+              <Link to="/videos" className="btn btn-outline">Watch Latest</Link>
               <a
                 href={CHANNEL_URLS.main}
                 target="_blank"

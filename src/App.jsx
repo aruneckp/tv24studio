@@ -8,6 +8,7 @@ import Shows from './pages/Shows.jsx'
 import Music from './pages/Music.jsx'
 import About from './pages/About.jsx'
 import Contact from './pages/Contact.jsx'
+import Newsroom from './pages/Newsroom.jsx'
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/music" element={<Music />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/newsroom" element={<Newsroom />} />
         </Routes>
       </main>
       <Footer />
