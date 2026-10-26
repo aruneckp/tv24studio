@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useRef, useState } from 'react'
 import { ANCHOR_IMAGE, ANCHOR_VIDEO } from '../data/newsroom.js'
+import { voiceLevel } from '../hooks/useAnchorVoice.js'
 import './NewsStage.css'
 
 function useClock() {
@@ -29,6 +30,67 @@ function AnchorPlaceholder({ speaking }) {
       <span className="anchor-ph-wave">
         <i /><i /><i /><i /><i />
       </span>
+    </div>
+  )
+}
+
+// Talking photo anchor. Every frame it reads the live voice level and sets
+// CSS variables: --jaw opens the mouth, --tilt/--nod/--lift move the head.
+function PhotoAnchor({ src, speaking, onError }) {
+  const elRef = useRef(null)
+
+  useEffect(() => {
+    const el = elRef.current
+    if (!el) return undefined
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    let raf = 0
+    let jaw = 0
+    let energy = 0
+    let syll = 0
+    let syllTarget = 0
+    let nextSyll = 0
+    const t0 = performance.now()
+
+    const frame = (now) => {
+      const t = (now - t0) / 1000
+      let target = 0
+      if (voiceLevel.active) {
+        if (voiceLevel.source === 'audio') {
+          target = Math.min(1, Math.max(0, (voiceLevel.value - 0.05) * 1.25)) // ignore hiss
+        } else {
+          // No audio to measure (browser voice): a syllable rhythm of ~6–9 per second.
+          if (now > nextSyll) {
+            syllTarget = Math.random() < 0.15 ? 0.1 : 0.45 + Math.random() * 0.55
+            nextSyll = now + 110 + Math.random() * 60
+          }
+          syll += (syllTarget - syll) * 0.35
+          target = syll
+        }
+      }
+      jaw += (target - jaw) * (target > jaw ? 0.55 : 0.3) // open fast, close a bit slower
+      energy += ((voiceLevel.active ? 1 : 0) - energy) * 0.03
+      if (reduce) {
+        el.style.setProperty('--jaw', '0')
+      } else {
+        el.style.setProperty('--jaw', jaw.toFixed(3))
+        // calm idle sway; livelier, with nods on loud syllables, while talking
+        el.style.setProperty('--tilt', `${(Math.sin(t * 0.7) * 0.5 + Math.sin(t * 1.9) * 0.35 * energy).toFixed(3)}deg`)
+        el.style.setProperty('--nod', `${(jaw * 0.6 * energy + Math.sin(t * 0.45) * 0.15).toFixed(3)}deg`)
+        el.style.setProperty('--lift', `${(Math.sin(t * 1.1) * 0.25 + 0.25).toFixed(3)}%`)
+      }
+      raf = requestAnimationFrame(frame)
+    }
+    raf = requestAnimationFrame(frame)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  return (
+    <div ref={elRef} className={`anchor-photo ${speaking ? 'is-speaking' : ''}`}>
+      <div className="anchor-head">
+        <img className="anchor-base" src={src} alt="TV24 news anchor" onError={onError} />
+        <span className="anchor-mouth" aria-hidden="true" />
+        <img className="anchor-jaw" src={src} alt="" aria-hidden="true" />
+      </div>
     </div>
   )
 }
@@ -72,9 +134,7 @@ const NewsStage = forwardRef(function NewsStage(
           />
         )}
         {anchor === 'image' && (
-          <div className={`anchor-photo ${speaking ? 'is-speaking' : ''}`}>
-            <img src={ANCHOR_IMAGE} alt="TV24 news anchor" onError={() => setAnchor('none')} />
-          </div>
+          <PhotoAnchor src={ANCHOR_IMAGE} speaking={speaking} onError={() => setAnchor('none')} />
         )}
         {anchor === 'none' && <AnchorPlaceholder speaking={speaking} />}
       </div>

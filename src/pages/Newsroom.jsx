@@ -28,7 +28,7 @@ export default function Newsroom() {
   const [voiceMode, setVoiceMode] = useState(null)
   const [log, setLog] = useState([])
 
-  const [voice, setVoice] = useState('female')
+  const [voice, setVoice] = useState('male')
   const [dialect, setDialect] = useState('standard')
   const [maxStories, setMaxStories] = useState(6)
   const [useLlm, setUseLlm] = useState(true)
@@ -218,8 +218,8 @@ export default function Newsroom() {
               <label>
                 Anchor voice
                 <select value={voice} onChange={(e) => setVoice(e.target.value)}>
-                  <option value="female">Female (Shruti)</option>
                   <option value="male">Male (Mohan)</option>
+                  <option value="female">Female (Shruti)</option>
                 </select>
               </label>
               <label>

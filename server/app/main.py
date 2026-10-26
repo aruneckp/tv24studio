@@ -33,7 +33,7 @@ class ManualStory(BaseModel):
 
 
 class BulletinRequest(BaseModel):
-    voice: str = Field("female", pattern="^(female|male)$")
+    voice: str = Field("male", pattern="^(female|male)$")
     dialect: str = Field("standard", pattern="^(standard|coastal|uttarandhra)$")
     max_stories: int = Field(6, ge=1, le=15)
     use_llm: bool = True

@@ -39,7 +39,7 @@ class VoiceAgent(Agent):
             state.mode["voice"] = "browser"
             state.note(self.name, "Server voice off — the page will read with the browser voice")
             return
-        voice = config.VOICES.get(state.voice, config.VOICES["female"])
+        voice = config.VOICES.get(state.voice, config.VOICES["male"])
         results = await asyncio.gather(*(self.record(s, voice) for s in state.rundown), return_exceptions=True)
         failed = [r for r in results if isinstance(r, Exception)]
         ok = len(results) - len(failed)

@@ -34,7 +34,7 @@ class Story:
 
 @dataclass
 class Bulletin:
-    voice: str = "female"
+    voice: str = "male"
     dialect: str = "standard"  # standard | coastal | uttarandhra
     max_stories: int = 6
     use_llm: bool = True

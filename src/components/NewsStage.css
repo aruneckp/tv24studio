@@ -122,21 +122,44 @@
   transition: opacity 0.4s;
   opacity: 0.5;
 }
-.anchor-photo img {
+.anchor-head {
   position: relative;
   width: 100%;
-  transform-origin: 50% 100%;
-  filter: drop-shadow(0 0 1.2cqw rgba(0, 0, 0, 0.6));
+  transform-origin: 46% 100%;
+  transform: translateY(calc(var(--lift, 0%) * -1)) rotate(var(--tilt, 0deg)) rotateX(var(--nod, 0deg));
+  will-change: transform;
   -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent);
   mask-image: linear-gradient(to bottom, #000 82%, transparent);
 }
-.anchor-photo.is-speaking::before { opacity: 1; }
-.anchor-photo.is-speaking img { animation: anchorTalk 3.2s ease-in-out infinite; }
-@keyframes anchorTalk {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  30% { transform: scale(1.012) rotate(-0.4deg); }
-  65% { transform: scale(1.006) rotate(0.35deg); }
+.anchor-head img {
+  display: block;
+  width: 100%;
 }
+.anchor-base {
+  position: relative;
+  filter: drop-shadow(0 0 1.2cqw rgba(0, 0, 0, 0.6));
+}
+/* Dark mouth opening, revealed as the jaw drops. Positions match public/anchor.png. */
+.anchor-mouth {
+  position: absolute;
+  left: 39.5%;
+  top: 66%;
+  width: 11%;
+  height: 2.6%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 40%, #2a0d0b, #120606 70%);
+  transform: scaleY(calc(0.2 + var(--jaw, 0) * 1.4));
+  transform-origin: 50% 0;
+  opacity: calc(var(--jaw, 0) * 1.6);
+}
+/* The chin and lower lip, cut from the same photo, move down with the voice. */
+.anchor-jaw {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(37.5% 66.5%, 52.5% 66.5%, 59% 74%, 58% 80%, 51% 86%, 39% 86%, 32% 80%, 31% 74%);
+  transform: translateY(calc(var(--jaw, 0) * 1.8%));
+}
+.anchor-photo.is-speaking::before { opacity: 1; }
 
 /* channel bug */
 .stage-bug {
@@ -367,5 +390,5 @@
 .stage:fullscreen .stage-fs { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .stage-bg::after, .ticker-move, .anchor-photo.is-speaking img, .stage-breaking span, .anchor-ph-wave i { animation: none; }
+  .stage-bg::after, .ticker-move, .stage-breaking span, .anchor-ph-wave i { animation: none; }
 }
