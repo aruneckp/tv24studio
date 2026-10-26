@@ -103,42 +103,54 @@
   50% { transform: scaleY(1); }
 }
 
-/* photo anchor (transparent cut-out), sits left of centre like a studio anchor */
+/* Photo anchor: real head + neck cut-out (public/anchor.png) on a suit drawn
+   in SVG. Box is 616 x 760 units; the head photo fills the top 616 x 416. */
 .anchor-photo {
   position: absolute;
-  left: 12cqw;
-  bottom: 14cqw; /* face stays clear of the lower third */
-  width: 40cqw;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  left: 14cqw;
+  bottom: 0;
+  width: 36cqw;
+  aspect-ratio: 616 / 760;
 }
 .anchor-photo::before {
   content: '';
   position: absolute;
-  inset: 10% 8% 0;
-  background: radial-gradient(ellipse at 50% 60%, rgba(247, 148, 29, 0.28), transparent 65%);
+  inset: 5% 0 20%;
+  background: radial-gradient(ellipse at 50% 45%, rgba(247, 148, 29, 0.26), transparent 62%);
   filter: blur(2cqw);
   transition: opacity 0.4s;
   opacity: 0.5;
 }
-.anchor-head {
-  position: relative;
+.anchor-photo.is-speaking::before { opacity: 1; }
+
+.anchor-suit {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  transform-origin: 46% 100%;
+  height: 100%;
+  overflow: visible;
+  transform-origin: 50% 100%;
+  /* slow breathing, a touch more while talking */
+  transform: translateY(var(--sway, 0%)) scaleY(var(--breath, 1));
+  will-change: transform;
+}
+.anchor-suit-back { filter: drop-shadow(0 0 1.2cqw rgba(0, 0, 0, 0.55)); }
+
+.anchor-head {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* pivot at the base of the neck */
+  transform-origin: 44.6% 92%;
   transform: translateY(calc(var(--lift, 0%) * -1)) rotate(var(--tilt, 0deg)) rotateX(var(--nod, 0deg));
   will-change: transform;
-  -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent);
-  mask-image: linear-gradient(to bottom, #000 82%, transparent);
 }
 .anchor-head img {
   display: block;
   width: 100%;
 }
-.anchor-base {
-  position: relative;
-  filter: drop-shadow(0 0 1.2cqw rgba(0, 0, 0, 0.6));
-}
+.anchor-base { position: relative; }
 /* Dark mouth opening, revealed as the jaw drops. Positions match public/anchor.png. */
 .anchor-mouth {
   position: absolute;
@@ -159,7 +171,6 @@
   clip-path: polygon(37.5% 66.5%, 52.5% 66.5%, 59% 74%, 58% 80%, 51% 86%, 39% 86%, 32% 80%, 31% 74%);
   transform: translateY(calc(var(--jaw, 0) * 1.8%));
 }
-.anchor-photo.is-speaking::before { opacity: 1; }
 
 /* channel bug */
 .stage-bug {

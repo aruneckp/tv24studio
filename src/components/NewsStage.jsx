@@ -35,7 +35,85 @@ function AnchorPlaceholder({ speaking }) {
 }
 
 // Talking photo anchor. Every frame it reads the live voice level and sets
-// CSS variables: --jaw opens the mouth, --tilt/--nod/--lift move the head.
+// CSS variables: --jaw opens the mouth, --tilt/--nod/--lift move the head,
+// --breath/--sway move the suit (body) separately from the head.
+
+// Suit drawn in the anchor box's 616 x 760 units. The neck of the head photo
+// ends at y = 392, centred on x = 275. Mirror a left-side x with 550 - x.
+const SUIT = {
+  navy: '#1c2536',
+  navyDark: '#111723',
+  lapel: '#161d2b',
+  shirt: '#f4f5f7',
+  shirtShade: '#d9dce2',
+  tie: '#c0211a',
+  tieDark: '#8f1712',
+  gold: '#f7941d',
+}
+const mirror = (pts) => pts.map(([x, y]) => [550 - x, y])
+const poly = (pts) => pts.map((p) => p.join(',')).join(' ')
+const LAPEL_L = [[226, 370], [168, 398], [186, 424], [160, 440], [275, 612], [252, 480], [238, 404]]
+const COLLAR_L = [[216, 362], [232, 356], [266, 394], [254, 418], [218, 390]]
+
+function SuitBack() {
+  return (
+    <svg className="anchor-suit anchor-suit-back" viewBox="0 0 616 760" aria-hidden="true">
+      <defs>
+        <linearGradient id="suitNavy" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor={SUIT.navy} />
+          <stop offset="1" stopColor={SUIT.navyDark} />
+        </linearGradient>
+        <radialGradient id="suitSheen" cx="0.5" cy="0.62" r="0.55">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.07" />
+          <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="tieRed" x1="0" x2="1">
+          <stop offset="0" stopColor={SUIT.tieDark} />
+          <stop offset="0.5" stopColor={SUIT.tie} />
+          <stop offset="1" stopColor={SUIT.tieDark} />
+        </linearGradient>
+      </defs>
+      {/* jacket */}
+      <path
+        d="M226 370 C184 384 126 398 84 414 C44 430 24 462 18 524 L12 760 L538 760 L532 524 C526 462 506 430 466 414 C424 398 366 384 324 370 Z"
+        fill="url(#suitNavy)"
+      />
+      <path d="M226 370 C184 384 126 398 84 414 C44 430 24 462 18 524 L12 760 L538 760 L532 524 C526 462 506 430 466 414 C424 398 366 384 324 370 Z" fill="url(#suitSheen)" />
+      {/* shoulder seams */}
+      <path d="M74 420 C84 484 86 580 82 760 M476 420 C466 484 464 580 468 760" stroke="#0b0f18" strokeWidth="3" fill="none" opacity="0.6" />
+      {/* shirt front */}
+      <polygon points="224,360 326,360 275,604" fill={SUIT.shirt} />
+      <polygon points="275,420 326,360 300,520" fill={SUIT.shirtShade} opacity="0.5" />
+      {/* tie blade */}
+      <polygon points="265,414 285,414 300,562 275,598 250,562" fill="url(#tieRed)" />
+      <g stroke={SUIT.gold} strokeWidth="3" opacity="0.55">
+        <line x1="262" y1="460" x2="290" y2="440" />
+        <line x1="258" y1="505" x2="294" y2="480" />
+        <line x1="256" y1="550" x2="296" y2="522" />
+      </g>
+      {/* lapels */}
+      <polygon points={poly(LAPEL_L)} fill={SUIT.lapel} stroke="#2b3550" strokeWidth="2" />
+      <polygon points={poly(mirror(LAPEL_L))} fill={SUIT.lapel} stroke="#2b3550" strokeWidth="2" />
+      {/* lapel mic, pocket square, button */}
+      <rect x="301" y="458" width="9" height="18" rx="3" fill="#0a0a0a" />
+      <rect x="303" y="452" width="5" height="8" fill="#3a3a3a" />
+      <polygon points="392,508 444,500 440,514 396,520" fill={SUIT.gold} />
+      <circle cx="275" cy="628" r="6" fill="#0d121c" stroke="#2b3550" strokeWidth="2" />
+    </svg>
+  )
+}
+
+function SuitFront() {
+  return (
+    <svg className="anchor-suit anchor-suit-front" viewBox="0 0 616 760" aria-hidden="true">
+      {/* shirt collar wings and tie knot, in front of the neck */}
+      <polygon points={poly(COLLAR_L)} fill={SUIT.shirt} stroke={SUIT.shirtShade} strokeWidth="2" />
+      <polygon points={poly(mirror(COLLAR_L))} fill={SUIT.shirt} stroke={SUIT.shirtShade} strokeWidth="2" />
+      <polygon points="262,392 288,392 284,418 266,418" fill={SUIT.tie} stroke={SUIT.tieDark} strokeWidth="2" />
+    </svg>
+  )
+}
+
 function PhotoAnchor({ src, speaking, onError }) {
   const elRef = useRef(null)
 
@@ -77,6 +155,9 @@ function PhotoAnchor({ src, speaking, onError }) {
         el.style.setProperty('--tilt', `${(Math.sin(t * 0.7) * 0.5 + Math.sin(t * 1.9) * 0.35 * energy).toFixed(3)}deg`)
         el.style.setProperty('--nod', `${(jaw * 0.6 * energy + Math.sin(t * 0.45) * 0.15).toFixed(3)}deg`)
         el.style.setProperty('--lift', `${(Math.sin(t * 1.1) * 0.25 + 0.25).toFixed(3)}%`)
+        // body: breathing, and a small shoulder rise with emphasis while talking
+        el.style.setProperty('--breath', (1 + Math.sin(t * 1.6) * 0.004 * (1 + energy)).toFixed(4))
+        el.style.setProperty('--sway', `${(-jaw * 0.35 * energy).toFixed(3)}%`)
       }
       raf = requestAnimationFrame(frame)
     }
@@ -86,11 +167,13 @@ function PhotoAnchor({ src, speaking, onError }) {
 
   return (
     <div ref={elRef} className={`anchor-photo ${speaking ? 'is-speaking' : ''}`}>
+      <SuitBack />
       <div className="anchor-head">
         <img className="anchor-base" src={src} alt="TV24 news anchor" onError={onError} />
         <span className="anchor-mouth" aria-hidden="true" />
         <img className="anchor-jaw" src={src} alt="" aria-hidden="true" />
       </div>
+      <SuitFront />
     </div>
   )
 }
