@@ -116,8 +116,8 @@
   aspect-ratio: 320 / 380;
   overflow: hidden;
   background: #0a0a0c;
-  -webkit-mask-image: radial-gradient(ellipse 88% 132% at 50% 82%, #000 56%, transparent 100%);
-  mask-image: radial-gradient(ellipse 88% 132% at 50% 82%, #000 56%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 55% 80% at 50% 80%, #000 38%, transparent 94%);
+  mask-image: radial-gradient(ellipse 55% 80% at 50% 80%, #000 38%, transparent 94%);
   filter: drop-shadow(0 1.2cqw 2.4cqw rgba(0, 0, 0, 0.6));
   animation: anchorBreathe 7s ease-in-out infinite;
 }
