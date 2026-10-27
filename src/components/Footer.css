@@ -13,24 +13,27 @@
 
 .footer-grid .brand {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-weight: 900;
+  align-items: center;
   margin-bottom: 14px;
 }
 
-.footer-grid .brand-mark {
-  font-size: 22px;
-  color: var(--t24-white);
-  background: linear-gradient(135deg, var(--t24-red), var(--t24-gold));
-  padding: 2px 8px;
-  border-radius: 4px;
+.footer-grid .brand-logo-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--t24-white);
+  padding: 4px;
+  box-shadow: 0 0 0 2px var(--t24-red);
 }
 
-.footer-grid .brand-studio {
-  font-size: 13px;
-  color: var(--t24-gold);
-  letter-spacing: 0.12em;
+.footer-grid .brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
 }
 
 .footer-about {

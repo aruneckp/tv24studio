@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { CHANNEL_URLS } from '../data/videos.js'
+import logo from '../assets/logo.png'
 import './Header.css'
 
 const NAV_LINKS = [
@@ -41,8 +42,9 @@ export default function Header() {
 
       <div className="container header-main">
         <NavLink to="/" className="brand">
-          <span className="brand-mark">TV24</span>
-          <span className="brand-studio">STUDIO</span>
+          <span className="brand-logo-chip">
+            <img src={logo} alt="TV24 Studio" className="brand-logo" />
+          </span>
         </NavLink>
 
         <nav className={`main-nav ${open ? 'is-open' : ''}`}>

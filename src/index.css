@@ -2,9 +2,9 @@
   /* TV24 Studio's own real brand palette, taken directly from the
      channel's actual YouTube logo & banner (red -> gold/orange gradient
      ring on a white ground). */
-  --t24-red: #e2231a;
-  --t24-red-dark: #a3170f;
-  --t24-gold: #f7941d;
+  --t24-red: #ee1c1f;
+  --t24-red-dark: #a30000;
+  --t24-gold: #f8961f;
   --t24-gold-dark: #c96f0f;
   --t24-black: #0b0b0d;
   --t24-dark: #16171c;

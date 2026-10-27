@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useRef, useState } from 'react'
 import { ANCHOR_IMAGE, ANCHOR_VIDEO } from '../data/newsroom.js'
 import { voiceLevel } from '../hooks/useAnchorVoice.js'
+import logo from '../assets/logo.png'
 import './NewsStage.css'
 
 function useClock() {
@@ -79,6 +80,7 @@ function PhotoAnchor({ src, speaking, onError }) {
       <img className="anchor-base" src={src} alt="TV24 news anchor" onError={onError} />
       <span className="anchor-mouth" aria-hidden="true" />
       <img className="anchor-jaw" src={src} alt="" aria-hidden="true" />
+      <span className="anchor-tally" aria-hidden="true" />
     </div>
   )
 }
@@ -129,8 +131,7 @@ const NewsStage = forwardRef(function NewsStage(
 
       {/* top-left channel bug */}
       <div className="stage-bug">
-        <span className="bug-mark">TV24</span>
-        <span className="bug-studio">STUDIO</span>
+        <img src={logo} alt="TV24 Studio" className="bug-logo" />
       </div>
 
       {/* top-right live + clock */}

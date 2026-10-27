@@ -26,9 +26,17 @@ def clean(text: str) -> str:
     return WS_RE.sub(" ", text).strip()
 
 
+PUBLISHER_SUFFIX_RE = re.compile(r"\s+-\s+[^-]{2,40}$")
+
+
+def strip_publisher(title: str) -> str:
+    # Google News appends " - Publisher" (e.g. "... - ఆంధ్రజ్యోతి"); drop it so
+    # it never ends up in a title the editor/anchor reuses verbatim.
+    return PUBLISHER_SUFFIX_RE.sub("", title).strip()
+
+
 def _norm_title(title: str) -> str:
-    # Google News appends " - Publisher"; drop it for de-duplication.
-    return re.sub(r"\s+-\s+[^-]{2,40}$", "", title).strip().lower()
+    return strip_publisher(title).lower()
 
 
 class CollectorAgent(Agent):
@@ -45,7 +53,7 @@ class CollectorAgent(Agent):
         source = clean(parsed.feed.get("title", "")) or url
         stories = []
         for entry in parsed.entries[:25]:
-            title = clean(entry.get("title", ""))
+            title = strip_publisher(clean(entry.get("title", "")))
             if not title:
                 continue
             ts = 0.0

@@ -103,51 +103,86 @@
   50% { transform: scaleY(1); }
 }
 
-/* Photo anchor: the real head cut-out (public/anchor.png), shown as-is — no
-   drawn body, no head movement. A soft mask fades the flat neck edge into
-   the stage instead of showing a hard cut line. */
+/* Photo anchor: a real chest-up photo (public/anchor.png) shown in a framed
+   broadcast panel — like a live camera box, not a cut-out floating head.
+   The only motion is the mouth, driven by the live voice level via --jaw. */
 .anchor-photo {
   position: absolute;
-  left: 16cqw;
-  bottom: 14cqw;
-  width: 34cqw;
-  -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent 97%);
-  mask-image: linear-gradient(to bottom, #000 82%, transparent 97%);
+  left: 3cqw;
+  bottom: 4.8cqw;
+  width: 26cqw;
+  aspect-ratio: 320 / 380;
+  border-radius: 1cqw;
+  overflow: hidden;
+  background: #0a0a0c;
+  box-shadow:
+    0 0 0 0.18cqw var(--t24-red),
+    0 0 0 0.36cqw rgba(247, 148, 29, 0.55),
+    0 1.4cqw 3cqw rgba(0, 0, 0, 0.55);
+  animation: anchorBreathe 7s ease-in-out infinite;
+}
+@keyframes anchorBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.006); }
 }
 .anchor-photo::before {
   content: '';
   position: absolute;
-  inset: 5% 0 20%;
-  background: radial-gradient(ellipse at 50% 45%, rgba(247, 148, 29, 0.26), transparent 62%);
-  filter: blur(2cqw);
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 30%, rgba(247, 148, 29, 0.22), transparent 62%);
   transition: opacity 0.4s;
-  opacity: 0.5;
+  opacity: 0.35;
+  pointer-events: none;
 }
-.anchor-photo.is-speaking::before { opacity: 1; }
+.anchor-photo.is-speaking::before { opacity: 0.85; }
 
-.anchor-photo img {
-  display: block;
-  width: 100%;
-}
-/* Dark mouth opening, revealed as the jaw drops. Positions match public/anchor.png. */
-.anchor-mouth {
+/* Tally light: lit red while the anchor is on mic, like a real camera light. */
+.anchor-tally {
   position: absolute;
-  left: 39.5%;
-  top: 66%;
-  width: 11%;
-  height: 2.6%;
+  top: 0.9cqw;
+  right: 0.9cqw;
+  width: 0.9cqw;
+  height: 0.9cqw;
   border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 40%, #2a0d0b, #120606 70%);
-  transform: scaleY(calc(0.2 + var(--jaw, 0) * 1.4));
-  transform-origin: 50% 0;
-  opacity: calc(var(--jaw, 0) * 1.6);
+  background: #4a0808;
+  box-shadow: inset 0 0 0.2cqw rgba(0, 0, 0, 0.6);
+  transition: background 0.2s, box-shadow 0.2s;
 }
-/* The chin and lower lip, cut from the same photo, move down with the voice. */
+.anchor-photo.is-speaking .anchor-tally {
+  background: var(--t24-red);
+  box-shadow: 0 0 1cqw rgba(226, 35, 26, 0.9);
+  animation: pulse 1.4s infinite;
+}
+
+.anchor-base,
 .anchor-jaw {
   position: absolute;
   inset: 0;
-  clip-path: polygon(37.5% 66.5%, 52.5% 66.5%, 59% 74%, 58% 80%, 51% 86%, 39% 86%, 32% 80%, 31% 74%);
-  transform: translateY(calc(var(--jaw, 0) * 1.8%));
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Dark mouth opening, revealed as the jaw drops. Positions match public/anchor.png
+   (measured directly off that 320x380 crop: lips span x 41.6%-60%, y 25.5%-29.2%). */
+.anchor-mouth {
+  position: absolute;
+  left: 42.5%;
+  top: 26.8%;
+  width: 16%;
+  height: 3.2%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 30%, #50160f, #180705 80%);
+  transform: scaleY(calc(0.15 + var(--jaw, 0) * 1.6));
+  transform-origin: 50% 10%;
+  opacity: calc(var(--jaw, 0) * 1.7);
+}
+/* The chin and lower lip, cut from the same photo, move down with the voice.
+   At rest it sits exactly over .anchor-mouth, hiding it; as it drops it
+   uncovers the dark gap underneath — that's the "mouth opening". */
+.anchor-jaw {
+  clip-path: polygon(38% 25%, 62% 25%, 67% 29%, 64% 34%, 54% 36.5%, 46% 36.5%, 36% 34%, 33% 29%);
+  transform: translateY(calc(var(--jaw, 0) * 4.2%));
 }
 
 /* channel bug */
@@ -156,26 +191,19 @@
   top: 2.4cqw;
   left: 2.4cqw;
   display: flex;
-  align-items: baseline;
-  gap: 0.6cqw;
-  padding: 0.6cqw 1.2cqw;
+  align-items: center;
+  padding: 0.6cqw;
   background: rgba(0, 0, 0, 0.55);
-  border-left: 0.4cqw solid var(--t24-red);
-  font-family: var(--sans);
+  border-radius: 50%;
+  border: 0.25cqw solid var(--t24-red);
 }
-.bug-mark {
-  font-size: 2.6cqw;
-  font-weight: 900;
-  background: linear-gradient(90deg, var(--t24-red), var(--t24-gold));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.bug-studio {
-  font-size: 1.2cqw;
-  font-weight: 800;
-  letter-spacing: 0.25em;
-  color: #fff;
+.bug-logo {
+  width: 6.4cqw;
+  height: 6.4cqw;
+  object-fit: contain;
+  border-radius: 50%;
+  background: var(--t24-white);
+  display: block;
 }
 
 .stage-live {

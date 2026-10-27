@@ -14,6 +14,7 @@ import httpx
 
 from .. import config
 from .base import Agent, Bulletin, Story
+from .collector import strip_publisher
 
 DIALECT_HINT = {
     "standard": "ప్రామాణిక తెలుగు వార్తా భాష (standard Telugu TV news register).",
@@ -27,6 +28,7 @@ Rules:
 - Write in Telugu script only. Dialect/register: {dialect}
 - Use ONLY facts present in the input. Never invent names, numbers, quotes or events.
 - Neutral and factual. No opinions, no praise or attack on any party or person.
+- Never read out the feed/source name (e.g. a publisher given in "Source:") — attribute stories to TV24 Studio's own newsroom, not to where the item was picked up from.
 - Script: 3 to 5 short spoken sentences, 45-90 words, easy to read aloud. Write numbers as words where natural.
 - Headline: max 8 words for the on-screen lower-third.
 - Ticker: one short line (max 12 words) for the bottom scroll.
@@ -51,10 +53,6 @@ def guess_category(text: str) -> str:
         if any(w in low for w in words):
             return cat
     return "వార్తలు"
-
-
-def strip_publisher(title: str) -> str:
-    return re.sub(r"\s+-\s+[^-]{2,40}$", "", title).strip()
 
 
 def shorten(text: str, words: int) -> str:

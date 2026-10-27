@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { CHANNEL_URLS, SOCIAL_LINKS, CONTACT } from '../data/videos.js'
+import logo from '../assets/logo.png'
 import './Footer.css'
 
 export default function Footer() {
@@ -8,8 +9,9 @@ export default function Footer() {
       <div className="container footer-grid">
         <div>
           <div className="brand">
-            <span className="brand-mark">TV24</span>
-            <span className="brand-studio">STUDIO</span>
+            <span className="brand-logo-chip">
+              <img src={logo} alt="TV24 Studio" className="brand-logo" />
+            </span>
           </div>
           <p className="footer-about">
             Telugu Political News Channel covering Andhra Pradesh politics,
