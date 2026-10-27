@@ -256,3 +256,10 @@
   .nr-form label select,
   .nr-form label input:not([type='checkbox']) { width: 150px; }
 }
+
+.nr-rendered {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--t24-border);
+}
+.nr-rendered .nr-hint { margin: 0; }

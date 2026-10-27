@@ -54,6 +54,38 @@ LLM the Editor still writes a usable script from the headline + summary.
 - `GET /api/bulletin/latest` — last generated bulletin
 - `GET /media/<file>.mp3` — recorded segments (cached by script + voice)
 
+## Offline anchor video (InfiniteTalk on a free Kaggle GPU)
+
+Render the anchor as real talking video ahead of time; the website then just plays it,
+with the TV graphics on top. Nothing extra runs on Render.
+
+```bash
+cd server && source .venv/bin/activate
+
+# 1. Agents write + voice a bulletin and pack a render job
+python -m app.render prepare                 # → server/renders/<id>.zip
+#    options: --max-stories 5  --voice male|female  --dialect coastal  --frame my_frame.png
+
+# 2. Kaggle (free): Datasets → New Dataset → upload the zip
+#    Open render/infinitetalk_kaggle.ipynb on Kaggle → Add Input (the dataset)
+#    Settings: GPU T4 x2, Internet On → Run All → download videos_<id>.zip from Output
+
+# 3. Put the videos into the website
+python -m app.render publish ~/Downloads/videos_<id>.zip
+git add ../public/bulletins && git commit -m "Bulletin <id>" && git push
+
+python -m app.render list                    # jobs and published bulletins
+```
+
+- The anchor frame is `public/anchor-frame.png` (960×540, same layout as the stage). Replace it
+  to change the anchor; keep the person on the left so the graphics don't cover the face.
+- `/newsroom` loads the newest bulletin from `public/bulletins/index.json` and plays its videos;
+  a segment without a video falls back to the photo anchor + voice. The last 10 bulletins are kept.
+- Speed on the free T4: roughly 10–25 min per 30 s of speech (fp8 low-memory mode). Try one segment
+  first with `ONLY = ["01_story"]` in the notebook.
+- Videos are committed to git, which grows the repo over time; for daily use, move them to a free
+  object store or YouTube later.
+
 ## Deploy on Render
 
 `render.yaml` at the repo root describes both services. To set them up by hand:

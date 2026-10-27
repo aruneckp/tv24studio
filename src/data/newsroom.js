@@ -120,3 +120,27 @@ export function splitSentences(text) {
     .map((s) => s.trim())
     .filter(Boolean)
 }
+
+// Bulletins rendered offline (python -m app.render publish) live in
+// public/bulletins/ and play as pre-made anchor videos — no server needed.
+export async function loadRenderedIndex() {
+  try {
+    const r = await fetch('/bulletins/index.json', { cache: 'no-cache' })
+    if (!r.ok || !(r.headers.get('content-type') || '').includes('json')) return []
+    const list = await r.json()
+    return Array.isArray(list) ? list : []
+  } catch {
+    return []
+  }
+}
+
+export async function loadRenderedBulletin(id) {
+  const r = await fetch(`/bulletins/${id}/bulletin.json`, { cache: 'no-cache' })
+  if (!r.ok) throw new Error(`Bulletin ${id} not found`)
+  const b = await r.json()
+  return {
+    ...b,
+    mode: { ...(b.mode || {}), video: 'rendered' },
+    log: [{ agent: 'Studio', level: 'info', message: `Playing the rendered bulletin of ${new Date(b.created_ts * 1000).toLocaleString('en-IN')}` }],
+  }
+}

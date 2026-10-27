@@ -124,7 +124,7 @@ function PhotoAnchor({ src, speaking, caption, onError }) {
 }
 
 const NewsStage = forwardRef(function NewsStage(
-  { segment, index, total, caption, ticker, speaking, onFullscreen },
+  { segment, index, total, caption, ticker, speaking, onFullscreen, onVideoProgress, onVideoEnd, onVideoError },
   ref,
 ) {
   const now = useClock()
@@ -141,6 +141,17 @@ const NewsStage = forwardRef(function NewsStage(
     else v.pause()
   }, [speaking, videoOk])
 
+  // Pre-rendered anchor video for this segment (offline InfiniteTalk render).
+  // It already contains the voice, so it plays unmuted and drives the captions.
+  const segVideo = segment?.video_url || null
+  const segVideoRef = useRef(null)
+  useEffect(() => {
+    const v = segVideoRef.current
+    if (!v) return
+    if (speaking) v.play().catch(() => {})
+    else v.pause()
+  }, [speaking, segVideo])
+
   const isStory = segment?.kind === 'story'
   const tickerLine = ticker.length ? ticker.join('   ◆   ') : 'TV24 స్టూడియో — తెలుగు రాజకీయ వార్తలు'
   const time = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
@@ -149,7 +160,24 @@ const NewsStage = forwardRef(function NewsStage(
     <div className="stage" ref={ref}>
       <div className="stage-bg" />
 
-      <div className="stage-anchor">
+      {segVideo && (
+        <video
+          key={segVideo}
+          ref={segVideoRef}
+          className="stage-segvideo"
+          src={segVideo}
+          playsInline
+          preload="auto"
+          onTimeUpdate={(e) => {
+            const v = e.currentTarget
+            if (v.duration) onVideoProgress?.(v.currentTime / v.duration)
+          }}
+          onEnded={() => onVideoEnd?.()}
+          onError={() => onVideoError?.()}
+        />
+      )}
+
+      <div className="stage-anchor" hidden={!!segVideo}>
         {anchor === 'video' && (
           <video
             ref={videoRef}

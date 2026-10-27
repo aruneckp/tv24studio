@@ -42,6 +42,16 @@
   to { transform: translateX(100%); }
 }
 
+/* pre-rendered anchor video: full frame, graphics sit on top */
+.stage-segvideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #07070a;
+}
+
 /* anchor */
 .stage-anchor {
   position: absolute;
