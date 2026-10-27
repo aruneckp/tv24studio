@@ -103,22 +103,22 @@
   50% { transform: scaleY(1); }
 }
 
-/* Photo anchor: a real chest-up photo (public/anchor.png) shown in a framed
-   broadcast panel — like a live camera box, not a cut-out floating head.
-   The only motion is the mouth, driven by the live voice level via --jaw. */
+/* Photo anchor: a real chest-up photo (public/anchor.png), sized and masked
+   to read as the shot itself — not a video-call box pasted on the set. It
+   fills most of the frame like a real anchor camera, and a soft mask fades
+   its top/side edges into stage-bg instead of a hard panel border. The only
+   motion is the mouth, driven by --jaw (see PhotoAnchor in NewsStage.jsx). */
 .anchor-photo {
   position: absolute;
-  left: 3cqw;
-  bottom: 4.8cqw;
-  width: 26cqw;
+  left: 0;
+  bottom: 4.6cqw;
+  width: 38cqw;
   aspect-ratio: 320 / 380;
-  border-radius: 1cqw;
   overflow: hidden;
   background: #0a0a0c;
-  box-shadow:
-    0 0 0 0.18cqw var(--t24-red),
-    0 0 0 0.36cqw rgba(247, 148, 29, 0.55),
-    0 1.4cqw 3cqw rgba(0, 0, 0, 0.55);
+  -webkit-mask-image: radial-gradient(ellipse 88% 132% at 50% 82%, #000 56%, transparent 100%);
+  mask-image: radial-gradient(ellipse 88% 132% at 50% 82%, #000 56%, transparent 100%);
+  filter: drop-shadow(0 1.2cqw 2.4cqw rgba(0, 0, 0, 0.6));
   animation: anchorBreathe 7s ease-in-out infinite;
 }
 @keyframes anchorBreathe {
@@ -131,28 +131,10 @@
   inset: 0;
   background: radial-gradient(ellipse at 50% 30%, rgba(247, 148, 29, 0.22), transparent 62%);
   transition: opacity 0.4s;
-  opacity: 0.35;
+  opacity: 0.3;
   pointer-events: none;
 }
-.anchor-photo.is-speaking::before { opacity: 0.85; }
-
-/* Tally light: lit red while the anchor is on mic, like a real camera light. */
-.anchor-tally {
-  position: absolute;
-  top: 0.9cqw;
-  right: 0.9cqw;
-  width: 0.9cqw;
-  height: 0.9cqw;
-  border-radius: 50%;
-  background: #4a0808;
-  box-shadow: inset 0 0 0.2cqw rgba(0, 0, 0, 0.6);
-  transition: background 0.2s, box-shadow 0.2s;
-}
-.anchor-photo.is-speaking .anchor-tally {
-  background: var(--t24-red);
-  box-shadow: 0 0 1cqw rgba(226, 35, 26, 0.9);
-  animation: pulse 1.4s infinite;
-}
+.anchor-photo.is-speaking::before { opacity: 0.75; }
 
 .anchor-base,
 .anchor-jaw {

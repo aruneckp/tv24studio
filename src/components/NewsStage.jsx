@@ -35,12 +35,55 @@ function AnchorPlaceholder({ speaking }) {
   )
 }
 
-// Talking photo anchor: the real head photo (public/anchor.png), unmodified,
-// with a dark mouth cut-out that opens on the live voice level via --jaw. No
-// drawn body, no head tilt/nod/sway — the photo stays exactly as it is, and
-// the only motion is the mouth, so it reads as the real person speaking.
-function PhotoAnchor({ src, speaking, onError }) {
+// How open the mouth should be for one character of the on-air script —
+// a cheap Telugu "viseme" guess with no audio needed: independent vowels and
+// vowel signs (maatras) open the mouth, a virama/space/punctuation closes it,
+// a bare consonant sits at its inherent half-open 'a'. Unicode block: Telugu
+// U+0C00–U+0C7F (ఁ..౿). This is what lets the mouth follow the actual script
+// — a news reader "reading", not a random flapping rhythm.
+function teluguOpenness(ch) {
+  if (!ch) return 0.05
+  const c = ch.codePointAt(0)
+  if (c >= 0x0c05 && c <= 0x0c14) return 0.92 // అ ఆ ఇ ఈ … independent vowels
+  if (c >= 0x0c3e && c <= 0x0c4c) return 0.78 // ా ి ీ ు ూ ె ే ై ొ ో ౌ … vowel signs
+  if (c === 0x0c4d) return 0.08 // ్ virama — kills the vowel, mouth shuts
+  if (c >= 0x0c02 && c <= 0x0c03) return 0.3 // ం ః anusvara / visarga
+  if ((c >= 0x0c15 && c <= 0x0c39) || (c >= 0x0c58 && c <= 0x0c5a)) return 0.48 // consonants, inherent 'a'
+  if (ch === ' ' || ch === '\t' || ch === '\n') return 0.04
+  if ('.!?,।॥'.includes(ch)) return 0.03
+  return 0.32 // digits, Latin, anything else
+}
+
+// Interpolated openness at fractional position t (0..1) through the text.
+function sampleOpenness(text, t) {
+  if (!text) return 0.05
+  const pos = Math.min(text.length - 1, Math.max(0, t * text.length))
+  const i0 = Math.floor(pos)
+  const i1 = Math.min(text.length - 1, i0 + 1)
+  const frac = pos - i0
+  const w0 = teluguOpenness(text[i0])
+  const w1 = teluguOpenness(text[i1])
+  return w0 + (w1 - w0) * frac
+}
+
+// Talking photo anchor: the real photo (public/anchor.png), unmodified, with
+// a dark mouth cut-out that opens on --jaw. No drawn body, no head tilt/nod —
+// the only motion is the mouth, paced by the actual caption on screen (the
+// sentence currently on air), so it reads as reading rather than flapping.
+// Real audio level (when the server recorded MP3 is playing) still modulates
+// how wide it opens; the script always drives the rhythm/shape.
+function PhotoAnchor({ src, speaking, caption, onError }) {
   const elRef = useRef(null)
+  const textRef = useRef({ text: '', start: 0, duration: 1200 })
+
+  // A new sentence on screen = a fresh read-through of its characters.
+  useEffect(() => {
+    textRef.current = {
+      text: caption || '',
+      start: performance.now(),
+      duration: Math.max(1200, (caption || '').length * 68),
+    }
+  }, [caption])
 
   useEffect(() => {
     const el = elRef.current
@@ -48,26 +91,22 @@ function PhotoAnchor({ src, speaking, onError }) {
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     let raf = 0
     let jaw = 0
-    let syll = 0
-    let syllTarget = 0
-    let nextSyll = 0
 
     const frame = (now) => {
       let target = 0
       if (voiceLevel.active) {
+        const { text, start, duration } = textRef.current
+        const t = Math.min(1, (now - start) / duration)
+        const base = sampleOpenness(text, t)
         if (voiceLevel.source === 'audio') {
-          target = Math.min(1, Math.max(0, (voiceLevel.value - 0.05) * 1.25)) // ignore hiss
+          // Real loudness still shapes it a little (pauses dip further, loud syllables pop more).
+          const level = Math.min(1, Math.max(0, (voiceLevel.value - 0.04) * 1.3))
+          target = base * (0.35 + 0.65 * level)
         } else {
-          // No audio to measure (browser voice): a syllable rhythm of ~6–9 per second.
-          if (now > nextSyll) {
-            syllTarget = Math.random() < 0.15 ? 0.1 : 0.45 + Math.random() * 0.55
-            nextSyll = now + 110 + Math.random() * 60
-          }
-          syll += (syllTarget - syll) * 0.35
-          target = syll
+          target = base
         }
       }
-      jaw += (target - jaw) * (target > jaw ? 0.55 : 0.3) // open fast, close a bit slower
+      jaw += (target - jaw) * (target > jaw ? 0.6 : 0.34) // open fast, close a bit slower
       el.style.setProperty('--jaw', reduce ? '0' : jaw.toFixed(3))
       raf = requestAnimationFrame(frame)
     }
@@ -80,7 +119,6 @@ function PhotoAnchor({ src, speaking, onError }) {
       <img className="anchor-base" src={src} alt="TV24 news anchor" onError={onError} />
       <span className="anchor-mouth" aria-hidden="true" />
       <img className="anchor-jaw" src={src} alt="" aria-hidden="true" />
-      <span className="anchor-tally" aria-hidden="true" />
     </div>
   )
 }
@@ -124,7 +162,7 @@ const NewsStage = forwardRef(function NewsStage(
           />
         )}
         {anchor === 'image' && (
-          <PhotoAnchor src={ANCHOR_IMAGE} speaking={speaking} onError={() => setAnchor('none')} />
+          <PhotoAnchor src={ANCHOR_IMAGE} speaking={speaking} caption={caption} onError={() => setAnchor('none')} />
         )}
         {anchor === 'none' && <AnchorPlaceholder speaking={speaking} />}
       </div>
