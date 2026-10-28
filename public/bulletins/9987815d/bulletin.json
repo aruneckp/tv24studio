@@ -1,0 +1,160 @@
+{
+  "id": "9987815d",
+  "created_ts": 1793146026.080161,
+  "voice": "male",
+  "dialect": "standard",
+  "mode": {
+    "collector": "live",
+    "editor": "rule-based",
+    "voice": "browser"
+  },
+  "ticker": [
+    "నేను సీపీగా ఉన్నప్పుడు రౌడీలు విజయవాడ వదిలి పారిపోయారు",
+    "Amaravati: 77 జడ్పీటీసీలు ఏకగ్రీవం"
+  ],
+  "rundown": [
+    {
+      "title": "Intro",
+      "summary": "",
+      "source": "",
+      "link": "",
+      "published_ts": 0.0,
+      "id": "d2c28e3bed",
+      "headline": "TV24 స్టూడియో వార్తలు",
+      "script": "శుభోదయం. TV24 స్టూడియో వార్తలకు స్వాగతం. ముందుగా ఈ గంట ముఖ్యాంశాలు. నేను సీపీగా ఉన్నప్పుడు రౌడీలు విజయవాడ వదిలి పారిపోయారు. Amaravati: 77 జడ్పీటీసీలు ఏకగ్రీవం.",
+      "ticker": "",
+      "category": "ముఖ్యాంశాలు",
+      "breaking": false,
+      "score": 0.0,
+      "audio_url": null,
+      "kind": "intro",
+      "video_url": "/bulletins/9987815d/00_intro.mp4"
+    },
+    {
+      "title": "నేను సీపీగా ఉన్నప్పుడు రౌడీలు విజయవాడ వదిలి పారిపోయారు",
+      "summary": "",
+      "source": "\"Andhra Pradesh\" - Google News",
+      "link": "https://news.google.com/rss/articles/CBMifEFVX3lxTE15dHVTOE45YlpteUxRd2VScHhCRWlpWnhqMzBtNjZNc0J1M3cyRU9IQ0gwVE9EMnc5ODYzUmNYNzRxcjA0X3dZMUVITnFUZWdhRURxbE9pbVUtYWZvczNXYkhOLWdQbHdpdF9KMFBJV0x4MU1aMjRwcjRvVEzSAXxBVV95cUxNeXR1UzhOOWJabXlMUXdlUnB4QkVpaVp4ajMwbTY2TXNCdTN3MkVPSENIMFRPRDJ3OTg2M1JjWDc0cXIwNF93WTFFSE5xVGVnYUVEcWxPaW1VLWFmb3MzV2JITi1nUGx3aXRfSjBQSVdMeDFNWjI0cHI0b1RM?oc=5",
+      "published_ts": 1793145586.0,
+      "id": "23f8629352",
+      "headline": "నేను సీపీగా ఉన్నప్పుడు రౌడీలు విజయవాడ వదిలి పారిపోయారు",
+      "script": "నేను సీపీగా ఉన్నప్పుడు రౌడీలు విజయవాడ వదిలి పారిపోయారు.",
+      "ticker": "నేను సీపీగా ఉన్నప్పుడు రౌడీలు విజయవాడ వదిలి పారిపోయారు",
+      "category": "వార్తలు",
+      "breaking": true,
+      "score": 6.97,
+      "audio_url": null,
+      "kind": "story",
+      "video_url": "/bulletins/9987815d/01_story.mp4"
+    },
+    {
+      "title": "Amaravati: 77 జడ్పీటీసీలు ఏకగ్రీవం",
+      "summary": "",
+      "source": "\"Andhra Pradesh\" - Google News",
+      "link": "https://news.google.com/rss/articles/CBMinwFBVV95cUxPWW5qNnQwanVfYTEzbHF2ckJWaXN1OFM1Tkw1Z2J2eWJjQXV3SHVoUExIWnBIeU9LR3Q5VnBBZ1UzUUI1QnlBZ2hPbVVxdWFTcV9pbjFVX0trNVBWenROeVVkOEJ6OUhkYkF0X3JyODFOZkIzUnRUMGJ3LUxVZTNYSnVvb1FsMENlTTgwRUw4WXdJNzMxTFIxTDl4T0lDWFnSAZ8BQVVfeXFMT1luajZ0MGp1X2ExM2xxdnJCVmlzdThTNU5MNWdidnliY0F1d0h1aFBMSFpwSHlPS0d0OVZwQWdVM1FCNUJ5QWdoT21VcXVhU3FfaW4xVV9LazVQVnp0TnlVZDhCejlIZGJBdF9ycjgxTmZCM1J0VDBidy1MVWUzWEp1b29RbDBDZU04MEVMOFl3STczMUxSMUw5eE9JQ1hZ?oc=5",
+      "published_ts": 1793140765.0,
+      "id": "ce057b0191",
+      "headline": "Amaravati: 77 జడ్పీటీసీలు ఏకగ్రీవం",
+      "script": "తాజా సమాచారం ప్రకారం, Amaravati: 77 జడ్పీటీసీలు ఏకగ్రీవం.",
+      "ticker": "Amaravati: 77 జడ్పీటీసీలు ఏకగ్రీవం",
+      "category": "వార్తలు",
+      "breaking": false,
+      "score": 5.63,
+      "audio_url": null,
+      "kind": "story",
+      "video_url": "/bulletins/9987815d/02_story.mp4"
+    },
+    {
+      "title": "Outro",
+      "summary": "",
+      "source": "",
+      "link": "",
+      "published_ts": 0.0,
+      "id": "e4bc8c931a",
+      "headline": "ధన్యవాదాలు",
+      "script": "ఇవీ ఈ గంట ముఖ్య వార్తలు. మరిన్ని తాజా వార్తల కోసం TV24 స్టూడియో యూట్యూబ్ ఛానల్‌ను సబ్‌స్క్రైబ్ చేయండి. ధన్యవాదాలు.",
+      "ticker": "",
+      "category": "TV24 స్టూడియో",
+      "breaking": false,
+      "score": 0.0,
+      "audio_url": null,
+      "kind": "outro",
+      "video_url": "/bulletins/9987815d/03_outro.mp4"
+    }
+  ],
+  "log": [
+    {
+      "t": 0.0,
+      "agent": "Collector",
+      "level": "info",
+      "message": "started"
+    },
+    {
+      "t": 0.36,
+      "agent": "Collector",
+      "level": "info",
+      "message": "Pulled 14 items from BBC తెలుగు"
+    },
+    {
+      "t": 0.91,
+      "agent": "Collector",
+      "level": "info",
+      "message": "Pulled 25 items from \"Andhra Pradesh\" - Google News"
+    },
+    {
+      "t": 0.91,
+      "agent": "Collector",
+      "level": "info",
+      "message": "38 unique stories after de-duplication"
+    },
+    {
+      "t": 0.91,
+      "agent": "Producer",
+      "level": "info",
+      "message": "started"
+    },
+    {
+      "t": 0.91,
+      "agent": "Producer",
+      "level": "info",
+      "message": "Picked top 2 of 38 stories — 1 flagged BREAKING"
+    },
+    {
+      "t": 0.91,
+      "agent": "Editor",
+      "level": "info",
+      "message": "started"
+    },
+    {
+      "t": 0.91,
+      "agent": "Editor",
+      "level": "info",
+      "message": "Wrote 2 scripts with the rule-based writer (no LLM configured)"
+    },
+    {
+      "t": 0.91,
+      "agent": "Director",
+      "level": "info",
+      "message": "started"
+    },
+    {
+      "t": 0.92,
+      "agent": "Director",
+      "level": "info",
+      "message": "Rundown locked: intro + 2 stories + outro, 2 ticker lines"
+    },
+    {
+      "t": 0.92,
+      "agent": "Anchor",
+      "level": "info",
+      "message": "started"
+    },
+    {
+      "t": 0.92,
+      "agent": "Anchor",
+      "level": "info",
+      "message": "Server voice off — the page will read with the browser voice"
+    }
+  ],
+  "published_ts": 1793146044.283294
+}

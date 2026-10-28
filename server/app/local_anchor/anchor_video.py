@@ -243,9 +243,6 @@ def render_segment(
     n = max(1, int(round(duration * fps)))
     tr = visemes_te.tracks(timeline, n, fps)
     bl = blink_track(n)
-    # a touch of life on stressed syllables, from the jaw track itself (no audio analysis needed)
-    jaw_smooth = np.convolve(tr["jaw"], np.ones(5) / 5, "same")
-    brow = np.clip(tr["jaw"] - jaw_smooth, 0, None) * 18
 
     H, W = img.shape[:2]
     out_mp4 = Path(out_mp4)
@@ -265,30 +262,9 @@ def render_segment(
         frame[y0:y1, x0:x1] = face.mouth(tr["jaw"][i], tr["round"][i], tr["spread"][i],
                                          tr["close"][i], tr["tongue"][i], tr["teeth"][i])
         frame = face.blink(frame, bl[i])
-        if brow[i] > 0.15:
-            _lift_brows(face, frame, brow[i])
         proc.stdin.write(frame.tobytes())
     proc.stdin.close()
     proc.wait()
     if proc.returncode:
         raise RuntimeError(f"ffmpeg exited {proc.returncode} rendering {out_mp4}")
     return n / fps
-
-
-def _lift_brows(face: Face, frame: np.ndarray, amt: float) -> None:
-    p = face.pts
-    x0, x1 = int(p[17, 0] - 15), int(p[26, 0] + 15)
-    y0, y1 = int(p[17:27, 1].min() - 40), int(p[36:48, 1].min() - 2)
-    H, W = frame.shape[:2]
-    x0, y0 = max(x0, 0), max(y0, 0)
-    x1, y1 = min(x1, W), min(y1, H)
-    if x1 <= x0 or y1 <= y0:
-        return
-    reg = frame[y0:y1, x0:x1]
-    Hh, Ww = reg.shape[:2]
-    X, Y = np.meshgrid(np.arange(Ww, dtype=np.float32), np.arange(Hh, dtype=np.float32))
-    by = p[17:27, 1].mean() - y0
-    wy = np.exp(-((Y - by) / (0.4 * Hh)) ** 2)
-    wx = np.clip(1 - np.abs(X - Ww / 2) / (Ww / 2), 0, 1) ** 0.5
-    frame[y0:y1, x0:x1] = cv2.remap(reg, X, (Y + amt * wy * wx).astype(np.float32),
-                                    cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
