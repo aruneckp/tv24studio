@@ -121,7 +121,7 @@ export function splitSentences(text) {
     .filter(Boolean)
 }
 
-// Bulletins rendered offline (python -m app.render publish) live in
+// Bulletins rendered offline (python -m app.render build) live in
 // public/bulletins/ and play as pre-made anchor videos — no server needed.
 export async function loadRenderedIndex() {
   try {

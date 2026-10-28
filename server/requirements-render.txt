@@ -1,0 +1,15 @@
+# Extra deps for `python -m app.render build` (local offline anchor-video
+# rendering) only — the live /api/bulletin demo server does not need these.
+# Also run: brew install ffmpeg-full   (plain ffmpeg lacks the rubberband filter)
+# and download the voice model — see server/README.md "Offline anchor video".
+torch
+torchaudio
+torchcodec
+coqui-tts
+dlib-bin
+face_recognition_models
+opencv-python-headless
+pillow
+librosa
+soundfile
+scipy

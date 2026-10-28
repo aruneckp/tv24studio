@@ -141,7 +141,7 @@ const NewsStage = forwardRef(function NewsStage(
     else v.pause()
   }, [speaking, videoOk])
 
-  // Pre-rendered anchor video for this segment (offline InfiniteTalk render).
+  // Pre-rendered anchor video for this segment (offline local render).
   // It already contains the voice, so it plays unmuted and drives the captions.
   const segVideo = segment?.video_url || null
   const segVideoRef = useRef(null)

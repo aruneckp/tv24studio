@@ -1,20 +1,19 @@
-"""Offline video rendering for the AI Newsroom.
+"""Offline video rendering for the AI Newsroom — fully local, no GPU needed.
 
-The anchor video is generated ahead of time on a free GPU (Kaggle) with
-InfiniteTalk, then published into the website, which simply plays it. Nothing
-here needs to run on Render.
+The agents write the bulletin, then a local neural Telugu voice (AI4Bharat
+FastPitch + HiFi-GAN) reads each segment and a CPU face-warp renderer animates
+the studio frame photo's mouth from the voice's own per-character timings. One
+command does the whole thing and drops the finished videos straight into the
+website.
 
-    # 1. On your Mac: agents write + voice a bulletin, and pack a render job
-    python -m app.render prepare                 # -> server/renders/<id>.zip
-
-    # 2. On Kaggle (free GPU): run render/infinitetalk_kaggle.ipynb with that
-    #    zip attached as a dataset; download videos_<id>.zip when it finishes
-
-    # 3. On your Mac: put the videos into the website
-    python -m app.render publish ~/Downloads/videos_<id>.zip
+    python -m app.render build
     git add public/bulletins && git commit -m "Bulletin <id>" && git push
 
-`python -m app.render list` shows prepared jobs and published bulletins.
+`python -m app.render list` shows published bulletins.
+
+One-time setup (see server/README.md): `brew install ffmpeg-full` (plain
+`ffmpeg` lacks the rubberband filter this needs) and the Python/model
+download under "Local anchor video".
 """
 
 from __future__ import annotations
@@ -22,10 +21,10 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import re
 import shutil
 import sys
 import time
-import zipfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -39,14 +38,7 @@ BULLETINS_DIR = SITE_PUBLIC / "bulletins"
 DEFAULT_FRAME = SITE_PUBLIC / "anchor-frame.png"
 KEEP_PUBLISHED = 10  # older bulletins are dropped from the site
 IST = timezone(timedelta(hours=5, minutes=30))
-
-# Scene description for InfiniteTalk. It animates the frame; the voice drives the lips.
-PROMPT = (
-    "A male Telugu television news anchor in a dark navy blazer and light blue shirt sits in a "
-    "news studio and reads the news to camera in a calm, professional manner. He looks straight "
-    "into the camera, speaks clearly with natural lip movement, small natural head movements and "
-    "occasional blinks. The background is a dark red studio backdrop. Steady medium shot, static camera."
-)
+SENT_SPLIT = re.compile(r"(?<=[.!?।])\s+")
 
 
 def _seg_key(i: int, seg: dict) -> str:
@@ -58,105 +50,101 @@ def _fail(msg: str) -> None:
     sys.exit(1)
 
 
-# ---------------------------------------------------------------- prepare
-def prepare(args: argparse.Namespace) -> None:
+def _sentences(script: str) -> list[str]:
+    return [s.strip() for s in SENT_SPLIT.split(script) if s.strip()]
+
+
+# ---------------------------------------------------------------- build
+def build(args: argparse.Namespace) -> None:
     frame = Path(args.frame).expanduser() if args.frame else DEFAULT_FRAME
     if not frame.exists():
         _fail(f"Anchor frame not found: {frame}")
+
+    from .local_anchor import anchor_video
+    from .local_anchor.text_te import is_mostly_telugu, telugu_safe
+    from .local_anchor.tts_bulletin import _find_ffmpeg, build_segment
+    from .local_anchor.tts_te import TeluguVoice
+
+    try:
+        ffmpeg = _find_ffmpeg()
+    except FileNotFoundError as exc:
+        _fail(str(exc))
+    try:
+        anchor_video.load_landmarks(frame)  # detect + cache once, fail fast if no face found
+    except Exception as exc:
+        _fail(f"Could not find a face in {frame}: {exc}")
 
     state = Bulletin(
         voice=args.voice,
         dialect=args.dialect,
         max_stories=args.max_stories,
         use_llm=not args.no_llm,
-        make_audio=True,
+        make_audio=False,  # voice comes from the local TTS below, not the server's edge-tts
     )
-    print("Running the agents (Collector → Producer → Editor → Director → Anchor)…")
+    print("Running the agents (Collector → Producer → Editor → Director)…")
     asyncio.run(run_pipeline(state))
     for e in state.log:
-        if e["message"] != "started":
+        if e["message"] != "started" and e["agent"] != "Anchor":
             print(f"  [{e['agent']}] {e['message']}")
 
-    missing = [s.headline for s in state.rundown if not s.audio_url]
-    if missing:
-        _fail(
-            "The Anchor agent could not record the voice for every segment "
-            f"({len(missing)} missing). The voice service needs internet — check your connection and try again."
-        )
     if state.mode.get("collector") != "live" and not args.allow_demo:
         _fail("No live news feeds were reachable, so this would be the demo bulletin. Re-run with --allow-demo to render it anyway.")
 
     data = state.to_dict()
-    job = RENDERS_DIR / data["id"]
-    if job.exists():
-        shutil.rmtree(job)
-    (job / "audio").mkdir(parents=True)
-    shutil.copy(frame, job / "frame.png")
-
-    segments = []
-    for i, seg in enumerate(data["rundown"]):
-        key = _seg_key(i, seg)
-        src = config.MEDIA_DIR / Path(seg["audio_url"]).name
-        audio_rel = f"audio/{key}.mp3"
-        shutil.copy(src, job / audio_rel)
-        seg["key"] = key
-        segments.append({"key": key, "audio": audio_rel, "headline": seg["headline"]})
-
-    data["render"] = {"engine": "infinitetalk", "prompt": PROMPT, "frame": "frame.png", "segments": segments}
-    (job / "bulletin.json").write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-
-    zip_path = RENDERS_DIR / f"{data['id']}.zip"
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
-        for f in job.rglob("*"):
-            z.write(f, f.relative_to(RENDERS_DIR))
-
-    print(f"\n✓ Render job ready: {zip_path}")
-    print(f"  {len(segments)} segments (intro + {len(segments) - 2} stories + outro)\n")
-    print("Next:")
-    print("  1. kaggle.com → Datasets → New Dataset → upload that zip")
-    print("  2. Open render/infinitetalk_kaggle.ipynb on Kaggle, attach the dataset, GPU T4 x2, Run All")
-    print(f"  3. Download videos_{data['id']}.zip, then:  python -m app.render publish <path to videos zip>")
-
-
-# ---------------------------------------------------------------- publish
-def publish(args: argparse.Namespace) -> None:
-    src = Path(args.videos).expanduser()
-    tmp = None
-    if src.suffix == ".zip":
-        tmp = RENDERS_DIR / f"_unzip_{int(time.time())}"
-        with zipfile.ZipFile(src) as z:
-            z.extractall(tmp)
-        src = tmp
-    if not src.is_dir():
-        _fail(f"Not a folder or zip: {args.videos}")
-
-    manifests = list(src.rglob("bulletin.json"))
-    if not manifests:
-        _fail("bulletin.json not found next to the videos. Use the zip the Kaggle notebook produced.")
-    vid_dir = manifests[0].parent
-    data = json.loads(manifests[0].read_text(encoding="utf-8"))
     bid = data["id"]
+    work = RENDERS_DIR / bid
+    if work.exists():
+        shutil.rmtree(work)
+    work.mkdir(parents=True)
+
+    print(f"Loading the Telugu voice ({args.voice})…")
+    voice = TeluguVoice()
 
     out = BULLETINS_DIR / bid
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
 
-    missing = []
-    for seg in data["rundown"]:
-        mp4 = vid_dir / f"{seg['key']}.mp4"
-        if mp4.exists():
-            shutil.copy(mp4, out / mp4.name)
-            seg["video_url"] = f"/bulletins/{bid}/{mp4.name}"
-        else:
-            missing.append(seg["key"])
+    t0 = time.time()
+    for i, seg in enumerate(data["rundown"]):
+        key = _seg_key(i, seg)
+        sentences = _sentences(seg["script"])
+        if not sentences:
             seg["video_url"] = None
-        seg["audio_url"] = None  # the video carries the voice
+            seg["audio_url"] = None
+            continue
+        if not is_mostly_telugu(seg["script"]):
+            print(f"  [{i + 1}/{len(data['rundown'])}] {key}: skipped — script is mostly non-Telugu "
+                  f"(the voice model can't read it): {seg['headline'][:50]!r}")
+            seg["video_url"] = None
+            seg["audio_url"] = None
+            continue
+        print(f"  [{i + 1}/{len(data['rundown'])}] {key}: {seg['headline'][:40]!r}", end="", flush=True)
+        sentences = [telugu_safe(s) for s in sentences]
+        tl = build_segment(sentences, work / key, voice, speaker=args.voice)
+        mp4 = out / f"{key}.mp4"
+        dur = anchor_video.render_segment(work / f"{key}.wav", mp4, tl, frame, ffmpeg=ffmpeg)
+        seg["video_url"] = f"/bulletins/{bid}/{mp4.name}"
+        seg["audio_url"] = None
+        print(f"  ({dur:.1f}s)")
+    print(f"Rendered {len(data['rundown'])} segments in {time.time() - t0:.1f}s")
+
     data.pop("render", None)
     data["published_ts"] = time.time()
     (out / "bulletin.json").write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    shutil.rmtree(work, ignore_errors=True)
 
-    # index.json — newest first, keep the last KEEP_PUBLISHED
+    _update_index(bid, data)
+
+    size = sum(f.stat().st_size for f in out.iterdir()) / 1e6
+    when = datetime.fromtimestamp(data["created_ts"], IST).strftime("%d %b %Y, %I:%M %p IST")
+    print(f"\n✓ Published bulletin {bid} ({when}) → public/bulletins/{bid}  [{size:.1f} MB]")
+    print("\nPreview: restart `npm run dev` (it only picks up new files in public/ on start), open /newsroom")
+    print("Put it on the website:")
+    print(f'  git add ../public/bulletins && git commit -m "Bulletin {bid}" && git push')
+
+
+def _update_index(bid: str, data: dict) -> None:
     index_path = BULLETINS_DIR / "index.json"
     index = json.loads(index_path.read_text(encoding="utf-8")) if index_path.exists() else []
     index = [b for b in index if b["id"] != bid]
@@ -169,49 +157,31 @@ def publish(args: argparse.Namespace) -> None:
     index = index[:KEEP_PUBLISHED]
     index_path.write_text(json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    if tmp:
-        shutil.rmtree(tmp, ignore_errors=True)
-    size = sum(f.stat().st_size for f in out.iterdir()) / 1e6
-    print(f"\n✓ Published bulletin {bid} ({when}) → public/bulletins/{bid}  [{size:.1f} MB]")
-    if missing:
-        print(f"  ! {len(missing)} segment(s) had no video and will be read with the photo anchor: {', '.join(missing)}")
-    print("\nPreview: restart `npm run dev` (it only picks up new files in public/ on start), open /newsroom")
-    print("Put it on the website:")
-    print(f'  git add ../public/bulletins && git commit -m "Bulletin {bid}" && git push')
-
 
 # ---------------------------------------------------------------- list
 def list_cmd(_: argparse.Namespace) -> None:
-    jobs = sorted(RENDERS_DIR.glob("*.zip")) if RENDERS_DIR.exists() else []
-    print("Prepared render jobs (server/renders):")
-    for z in jobs:
-        print(f"  {z.name}  {z.stat().st_size / 1e6:.1f} MB")
-    if not jobs:
-        print("  (none)")
     index_path = BULLETINS_DIR / "index.json"
-    print("\nPublished on the website (public/bulletins):")
+    print("Published on the website (public/bulletins):")
     for b in json.loads(index_path.read_text(encoding="utf-8")) if index_path.exists() else []:
         print(f"  {b['id']}  {b['title']}  {b['stories']} stories — {b['headline']}")
+    if not index_path.exists():
+        print("  (none)")
 
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="python -m app.render", description="Offline anchor-video rendering for the TV24 newsroom")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    pp = sub.add_parser("prepare", help="run the agents and pack a render job zip")
-    pp.add_argument("--voice", choices=["male", "female"], default="male")
-    pp.add_argument("--dialect", choices=["standard", "coastal", "uttarandhra"], default="standard")
-    pp.add_argument("--max-stories", type=int, default=5)
-    pp.add_argument("--no-llm", action="store_true", help="use the rule-based editor")
-    pp.add_argument("--frame", help="anchor studio frame image (default: public/anchor-frame.png)")
-    pp.add_argument("--allow-demo", action="store_true", help="render even if no live feeds were reachable")
-    pp.set_defaults(func=prepare)
+    pb = sub.add_parser("build", help="run the agents, voice and render the anchor videos, publish to the site")
+    pb.add_argument("--voice", choices=["male", "female"], default="male")
+    pb.add_argument("--dialect", choices=["standard", "coastal", "uttarandhra"], default="standard")
+    pb.add_argument("--max-stories", type=int, default=5)
+    pb.add_argument("--no-llm", action="store_true", help="use the rule-based editor")
+    pb.add_argument("--frame", help="anchor studio frame image (default: public/anchor-frame.png)")
+    pb.add_argument("--allow-demo", action="store_true", help="render even if no live feeds were reachable")
+    pb.set_defaults(func=build)
 
-    pb = sub.add_parser("publish", help="add rendered videos to the website")
-    pb.add_argument("videos", help="videos_<id>.zip from Kaggle (or its unzipped folder)")
-    pb.set_defaults(func=publish)
-
-    pl = sub.add_parser("list", help="show prepared jobs and published bulletins")
+    pl = sub.add_parser("list", help="show published bulletins")
     pl.set_defaults(func=list_cmd)
 
     args = p.parse_args()

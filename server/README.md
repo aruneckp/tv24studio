@@ -54,35 +54,51 @@ LLM the Editor still writes a usable script from the headline + summary.
 - `GET /api/bulletin/latest` — last generated bulletin
 - `GET /media/<file>.mp3` — recorded segments (cached by script + voice)
 
-## Offline anchor video (InfiniteTalk on a free Kaggle GPU)
+## Offline anchor video (local, CPU only — no GPU, no cloud step)
 
-Render the anchor as real talking video ahead of time; the website then just plays it,
-with the TV graphics on top. Nothing extra runs on Render.
+Renders the anchor as real talking video ahead of time, entirely on your Mac;
+the website then just plays it, with the TV graphics on top. One command does
+the whole thing — agents, voice and video — and publishes straight to the site.
 
 ```bash
 cd server && source .venv/bin/activate
 
-# 1. Agents write + voice a bulletin and pack a render job
-python -m app.render prepare                 # → server/renders/<id>.zip
+python -m app.render build                   # agents → voice → video → public/bulletins/<id>
 #    options: --max-stories 5  --voice male|female  --dialect coastal  --frame my_frame.png
 
-# 2. Kaggle (free): Datasets → New Dataset → upload the zip
-#    Open render/infinitetalk_kaggle.ipynb on Kaggle → Add Input (the dataset)
-#    Settings: GPU T4 x2, Internet On → Run All → download videos_<id>.zip from Output
-
-# 3. Put the videos into the website
-python -m app.render publish ~/Downloads/videos_<id>.zip
 git add ../public/bulletins && git commit -m "Bulletin <id>" && git push
 
-python -m app.render list                    # jobs and published bulletins
+python -m app.render list                    # published bulletins
 ```
 
+**One-time setup**, beyond `pip install -r requirements.txt`:
+
+```bash
+brew install ffmpeg-full    # plain `ffmpeg` lacks the rubberband filter this needs
+.venv/bin/python -m pip install -r requirements-render.txt
+
+mkdir -p models
+curl -L -o models/te.zip https://github.com/AI4Bharat/Indic-TTS/releases/download/v1-checkpoints-release/te.zip
+unzip -q models/te.zip -d models && rm models/te.zip
+```
+
+That downloads AI4Bharat's Telugu FastPitch + HiFi-GAN voice (MIT-licensed, ~1.5 GB, male
+and female speakers matching the `--voice` flag) into `models/te/`. `app/local_anchor/`
+has the rest: `tts_te.py` runs the voice model and returns exact per-character timings;
+`visemes_te.py` turns Telugu letters into mouth shapes from those timings (no audio
+analysis, no guessing); `anchor_video.py` warps and paints the mouth open on the studio
+frame photo with dlib face landmarks, and pipes frames + audio through ffmpeg to an MP4.
+Runs comfortably faster than real time on a laptop CPU.
+
+Deliberately **not** using Wav2Lip or any other model pretrained on the LRS2 dataset —
+its license prohibits commercial use, which a monetised news channel is.
+
 - The anchor frame is `public/anchor-frame.png` (960×540, same layout as the stage). Replace it
-  to change the anchor; keep the person on the left so the graphics don't cover the face.
+  to change the anchor; keep the person on the left so the graphics don't cover the face. Face
+  landmarks are detected once and cached next to it (`anchor-frame.png.landmarks.npy`) — delete
+  that file after swapping the photo.
 - `/newsroom` loads the newest bulletin from `public/bulletins/index.json` and plays its videos;
   a segment without a video falls back to the photo anchor + voice. The last 10 bulletins are kept.
-- Speed on the free T4: roughly 10–25 min per 30 s of speech (fp8 low-memory mode). Try one segment
-  first with `ONLY = ["01_story"]` in the notebook.
 - Videos are committed to git, which grows the repo over time; for daily use, move them to a free
   object store or YouTube later.
 
